@@ -1,7 +1,9 @@
 # pyzhihu
 爬取知乎首页，并查看某一问题
 
-一次爬取20条话题，可通过修改
+默认一次爬取10条话题  
+
+可通过修改
 
     for num in range(1,3):
         url_list.append(baseurl + str(num*5))
