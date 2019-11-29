@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 # _*_ coding: utf-8 _*_
+import os
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import requests
 import json
+import sys
+sys.setrecursionlimit(10000)
 
 #问题id
 ques_id_list =[]
@@ -50,9 +53,12 @@ def getZhiHu():
             print(htmls.get_text())
             print('')
 
+
+
 base_item_url_start = 'https://www.zhihu.com/api/v4/questions/'
 base_item_url_end = '/answers?include=data%5B*%5D.is_normal%2Cadmin_closed_comment%2Creward_info%2Cis_collapsed%2Cannotation_action%2Cannotation_detail%2Ccollapse_reason%2Cis_sticky%2Ccollapsed_by%2Csuggest_edit%2Ccomment_count%2Ccan_comment%2Ccontent%2Ceditable_content%2Cvoteup_count%2Creshipment_settings%2Ccomment_permission%2Ccreated_time%2Cupdated_time%2Creview_info%2Crelevant_info%2Cquestion%2Cexcerpt%2Crelationship.is_authorized%2Cis_author%2Cvoting%2Cis_thanked%2Cis_nothelp%2Cis_labeled%2Cis_recognized%2Cpaid_info%2Cpaid_info_content%3Bdata%5B*%5D.mark_infos%5B*%5D.url%3Bdata%5B*%5D.author.follower_count%2Cbadge%5B*%5D.topics&offset=&limit=3&sort_by=default&platform=desktop'
 
+count = 0
 #单个问题抓取
 def getZhiHuItemDetail(url):
 
@@ -62,35 +68,59 @@ def getZhiHuItemDetail(url):
     print('总共回答数：'+ str(dit_total['totals']))
 
     dit_list = dict_json['data']
-    count = 0
     for dictBean in dit_list:
+        question_info = []  # 该问题所有数据
+        global  count
         if count ==0 :
             print('问题： ' + dictBean['question']['title'])
             count = count + 1
         print('回答者：'+dictBean['author']['name'])
         print('个人签名：' + dictBean['author']['headline'])
 
+        question_info.append('回答者：'+dictBean['author']['name'])
+        question_info.append('个人签名：' + dictBean['author']['headline'])
+
         # 回答内容
         htmls = BeautifulSoup(dictBean['content'], "html.parser")
         print(htmls.get_text())
+        question_info.append(htmls.get_text())
         print('')
+        saveQuesInfo(question_info,dictBean['question']['title'],dit_total['totals'])
 
-    str_input = input('是否加载更多 0:结束 ； 1：加载更多 ')
-
-    if str_input == '1':
+    is_end = dit_total['is_end']
+    if is_end :
+        print('.................结束......................')
+        # exit()
+        startSpider()
+    else:
         getZhiHuItemDetail(dit_total['next'])
+
+#保存某一个问题详情
+def saveQuesInfo(question_info,title,totalNum):
+
+    basePath="C:/Users/fpm0300/Desktop/zhihu/"
+    file = open(os.path.join(basePath)+"{}.txt".format(title), "a",encoding='utf-8')
+    for ques in question_info:
+        for i in range(len(ques)):
+            file.write(ques[i])
+        file.write('\n')
+    file.write('\n')
+    file.close()
+
+
+#爬取某一个问题
+def startSpider():
+    id = input('请输入想要查看的问题id：')
+    if id != 'exit':
+        url = base_item_url_start + id + base_item_url_end
+        getZhiHuItemDetail(url)
     else:
         print('.................结束......................')
         exit()
 
 if __name__ == "__main__":
     getZhiHu()
-    id = input('请输入想要查看的问题id：')
+    startSpider()
 
-    if id != 'exit' :
-        url = base_item_url_start + id + base_item_url_end
-        getZhiHuItemDetail(url)
-    else:
-        print('.................结束......................')
-        exit()
+
 
